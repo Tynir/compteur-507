@@ -1,6 +1,6 @@
 /* Compteur 507 : rend l'appli installable et utilisable sans réseau.
    Réseau d'abord (les mises à jour arrivent dès qu'on est en ligne), cache en secours. */
-var CACHE = "compteur507-v1";
+var CACHE = "compteur507-v3";
 var FILES = ["./", "index.html", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", function (e) {

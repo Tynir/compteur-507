@@ -25,7 +25,7 @@ img{max-width:100%}
 /* Layout : une colonne d'appli de téléphone (560 px max), barre d'onglets en bas, étiquettes façon gaffer sur flight case. */
 :root {
   --bg: #121113; --panel: #1c1b1e; --panel2: #29272b; --line: #3a373c;
-  --fg: #ede6d6; --mute: #9d968b; --accent: #e0262b; --on-accent: #ffffff;
+  --fg: #ede6d6; --mute: #9d968b; --accent: #e0262b; --on-accent: #ffffff; --crit: #e0262b;
   --amber: #e8a33d; --green: #5dbb63; --tape: #2f2d31;
   --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
   --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
@@ -34,11 +34,11 @@ img{max-width:100%}
 }
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
   --bg: #f2f1ef; --panel: #ffffff; --panel2: #e9e7e4; --line: #d6d2cc;
-  --fg: #1b191a; --mute: #69645d; --accent: #c81e24; --on-accent: #ffffff;
+  --fg: #1b191a; --mute: #69645d; --accent: #1f7a3a; --on-accent: #ffffff; --crit: #c81e24;
   --amber: #a8680a; --green: #2d8338; --tape: #262427; color-scheme: light; } }
 :root[data-theme="light"] {
   --bg: #f2f1ef; --panel: #ffffff; --panel2: #e9e7e4; --line: #d6d2cc;
-  --fg: #1b191a; --mute: #69645d; --accent: #c81e24; --on-accent: #ffffff;
+  --fg: #1b191a; --mute: #69645d; --accent: #1f7a3a; --on-accent: #ffffff; --crit: #c81e24;
   --amber: #a8680a; --green: #2d8338; --tape: #262427; color-scheme: light; }
 
 html, body { background: var(--bg); color: var(--fg); }
@@ -61,7 +61,7 @@ button { cursor: pointer; }
 .row.total > :first-child { color: var(--fg); font-weight: 700; }
 .v { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .row.total .v { font-family: var(--display); font-weight: 900; font-size: 22px; }
-.amber { color: var(--amber); } .green { color: var(--green); } .red { color: var(--accent); }
+.amber { color: var(--amber); } .green { color: var(--green); } .red { color: var(--crit); }
 
 .gauge { position: relative; width: min(240px, 70vw); aspect-ratio: 1; margin: 4px auto 0; max-width: 100%; }
 .gauge svg { width: 100%; height: 100%; display: block; }
@@ -80,7 +80,7 @@ button { cursor: pointer; }
 .alert p { margin: 0; color: var(--mute); font-size: 14px; }
 .alert.ok i { background: var(--green); } .alert.ok b { color: var(--green); }
 .alert.warn i { background: var(--amber); } .alert.warn b { color: var(--amber); }
-.alert.crit i { background: var(--accent); } .alert.crit b { color: var(--accent); }
+.alert.crit i { background: var(--crit); } .alert.crit b { color: var(--crit); }
 
 .month { display: grid; gap: 4px; }
 .month .row > :first-child { color: var(--fg); text-transform: capitalize; }
@@ -109,7 +109,7 @@ button { cursor: pointer; }
 .btn { border: 0; border-radius: 10px; padding: 11px 16px; font-weight: 700; background: var(--accent); color: var(--on-accent); }
 .btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
 .btn.quiet { background: transparent; color: var(--mute); padding-inline: 8px; }
-.btn.danger { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.btn.danger { background: transparent; color: var(--crit); border: 1px solid var(--crit); }
 .btns { display: flex; gap: 8px; flex-wrap: wrap; }
 
 nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--panel); border-top: 1px solid var(--line);
@@ -144,6 +144,19 @@ nav.tabs button[aria-selected="true"] svg { color: var(--accent); }
 .rules { margin: 0; padding-left: 18px; color: var(--mute); font-size: 14px; display: grid; gap: 4px; }
 .note { color: var(--mute); font-size: 12px; }
 .toast { position: fixed; z-index: 60; left: 50%; transform: translateX(-50%); bottom: calc(150px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 9px 16px; border-radius: 99px; font-weight: 700; font-size: 14px; }
+.chart { display: grid; gap: 4px; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .cap { stroke: var(--amber); stroke-width: 1; stroke-dasharray: 4 4; }
+.chart .area { fill: var(--accent); opacity: .16; }
+.chart .line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .pt { fill: var(--accent); stroke: var(--panel); stroke-width: 2; }
+.chart .guide { stroke: var(--fg); stroke-width: 1; opacity: .35; }
+.chart text { font-family: var(--body); font-size: 10px; fill: var(--mute); }
+.chart text.val { fill: var(--fg); font-weight: 600; font-size: 11px; }
+.chart .hit { fill: transparent; cursor: pointer; }
+.chart .read { font-size: 14px; color: var(--mute); min-height: 20px; }
+.chart .read b { color: var(--fg); font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: no-preference) { .gauge .arc { transition: stroke-dasharray .6s ease; } }
 </style>
 </head>
@@ -348,7 +361,34 @@ var C507 = (function () {
   }
   function h(x) { return num(x) + " h"; }
 
-  return { R: R, KINDS: KINDS, WORK: WORK, DAY: DAY, P: P, S: S, addMonths: addMonths, days: days, span: span,
+  /* Allocation journalière brute, annexe 8 (guide France Travail, septembre 2026) :
+     AJ = A + B + C, avec AJ minimale = 31,96 €
+     A = AJmin × (0,42 × SR jusqu'à 14 400 € + 0,05 × SR au-delà) / 5000
+     B = AJmin × (0,26 × NHT jusqu'à 720 h + 0,08 × NHT au-delà) / 507
+     C = AJmin × 0,40 ; plancher 38 €, plafond 174,80 €. */
+  var AJ = { MIN: 31.96, PLANCHER: 38, PLAFOND: 174.80, SR_SEUIL: 14400, NHT_SEUIL: 720 };
+  // France Travail tronque chaque partie au centime (exemple du guide : 39,80 + 12,20 + 12,78 = 64,78 €).
+  function r2(x) { return Math.floor(x * 100 + 1e-6) / 100; }
+  function ajCalc(sr, nht) {
+    var a = r2(AJ.MIN * (0.42 * Math.min(sr, AJ.SR_SEUIL) + 0.05 * Math.max(0, sr - AJ.SR_SEUIL)) / 5000);
+    var b = r2(AJ.MIN * (0.26 * Math.min(nht, AJ.NHT_SEUIL) + 0.08 * Math.max(0, nht - AJ.NHT_SEUIL)) / 507);
+    var c = r2(AJ.MIN * 0.40), rawAj = r2(a + b + c);
+    return { a: a, b: b, c: c, raw: rawAj, aj: Math.min(AJ.PLAFOND, Math.max(AJ.PLANCHER, rawAj)),
+             plancher: rawAj < AJ.PLANCHER, plafond: rawAj > AJ.PLAFOND };
+  }
+  function rights(entries, r) {
+    var work = entries.filter(function (e) { return e.kind === "TRAVAIL" && overlap(e, r.start, r.fct) > 0; });
+    var sr = sum(work, function (e) { return (+e.gross || 0) * overlap(e, r.start, r.fct) / span(e); });
+    var nht = r.techRet + r.susp;
+    var out = { sr: sr, nht: nht, count: work.length, reached: r.reached,
+                missing: work.filter(function (e) { return !(+e.gross > 0); }).length };
+    if (sr > 0 && r.reached) out.now = ajCalc(sr, nht);
+    else if (sr > 0 && nht > 0) { out.projSr = sr * R.SEUIL / nht; out.proj = ajCalc(out.projSr, R.SEUIL); }
+    return out;
+  }
+  function eur(x) { return x.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"; }
+
+  return { ajCalc: ajCalc, rights: rights, eur: eur, AJ: AJ, R: R, KINDS: KINDS, WORK: WORK, DAY: DAY, P: P, S: S, addMonths: addMonths, days: days, span: span,
            raw: raw, compute: compute, overview: overview, lastWorkEnd: lastWorkEnd,
            fd: fd, fds: fds, fm: fm, h: h, num: num };
 })();
@@ -360,6 +400,16 @@ if (typeof module !== "undefined") module.exports = C507;
   var state = { entries: [], settings: { openingFct: "", over50: false }, example: false };
   var tab = "compteur";
 
+  var THEME_KEY = "compteur507.theme", hostTheme = document.documentElement.getAttribute("data-theme"), theme = "auto";
+  try { theme = localStorage.getItem(THEME_KEY) || "auto"; } catch (e) {}
+  function applyTheme() {
+    var el = document.documentElement, v = theme === "dark" || theme === "light" ? theme : hostTheme;
+    if (v) el.setAttribute("data-theme", v); else el.removeAttribute("data-theme");
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", getComputedStyle(el).getPropertyValue("--bg").trim() || "#121113");
+  }
+  applyTheme();
+
   function todayT() { var n = new Date(); return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()); }
   function iso(t) { return C.S(t); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -369,12 +419,12 @@ if (typeof module !== "undefined") module.exports = C507;
     var E = function (id, kind, s, e, x) { return Object.assign({ id: id, kind: kind, start: s, end: e, hours: 0, cachets: 0, employer: "", note: "" }, x); };
     return {
       entries: [
-        E(1, "TRAVAIL", d(-310), d(-306), { hours: 48, employer: "Théâtre municipal" }),
-        E(2, "TRAVAIL", d(-250), d(-221), { hours: 236, employer: "Sono Pyrénées", note: "Tournée des fêtes" }),
-        E(3, "TRAVAIL", d(-160), d(-158), { hours: 30, employer: "Théâtre municipal" }),
-        E(5, "TRAVAIL", d(-75), d(-70), { hours: 60, employer: "Sono Pyrénées" }),
-        E(6, "TRAVAIL", d(-20), d(-18), { hours: 36, employer: "Festival d'été" }),
-        E(7, "TRAVAIL", d(12), d(14), { hours: 30, employer: "Théâtre municipal", note: "Prévu" })
+        E(1, "TRAVAIL", d(-310), d(-306), { hours: 48, gross: 720, employer: "Théâtre municipal" }),
+        E(2, "TRAVAIL", d(-250), d(-221), { hours: 236, gross: 3540, employer: "Sono Pyrénées", note: "Tournée des fêtes" }),
+        E(3, "TRAVAIL", d(-160), d(-158), { hours: 30, gross: 450, employer: "Théâtre municipal" }),
+        E(5, "TRAVAIL", d(-75), d(-70), { hours: 60, gross: 900, employer: "Sono Pyrénées" }),
+        E(6, "TRAVAIL", d(-20), d(-18), { hours: 36, gross: 540, employer: "Festival d'été" }),
+        E(7, "TRAVAIL", d(12), d(14), { hours: 30, gross: 450, employer: "Théâtre municipal", note: "Prévu" })
       ],
       settings: { openingFct: iso(C.addMonths(t, -10)), over50: false }
     };
@@ -391,6 +441,29 @@ if (typeof module !== "undefined") module.exports = C507;
     try { localStorage.setItem(KEY, JSON.stringify({ version: 1, entries: state.entries, settings: state.settings })); } catch (e) {}
   }
   function leaveExample() { if (state.example) { state.example = false; state.entries = []; state.settings = { openingFct: "", over50: false }; } }
+
+  // Net : le montant saisi s'il existe, sinon une estimation à partir du brut.
+  // Taux de cotisations : celui des réglages, sinon celui constaté sur tes contrats où brut et net sont saisis, sinon 23 %.
+  var NET_DEFAULT = 23;
+  function learnedRate() {
+    var g = 0, n = 0;
+    state.entries.forEach(function (e) { if (+e.gross > 0 && +e.net > 0) { g += +e.gross; n += +e.net; } });
+    if (!(g > 0)) return null;
+    var r = (1 - n / g) * 100;
+    return r >= 5 && r <= 45 ? r : null;
+  }
+  function netRate() {
+    var m = parseFloat(state.settings.netRate);
+    if (m > 0 && m < 60) return { pct: m, src: "réglé par toi" };
+    var l = learnedRate();
+    if (l != null) return { pct: l, src: "constaté sur tes fiches de paie" };
+    return { pct: NET_DEFAULT, src: "taux moyen par défaut" };
+  }
+  function netOf(e) {
+    if (+e.net > 0) return { v: +e.net, est: false };
+    if (+e.gross > 0) return { v: Math.round(+e.gross * (100 - netRate().pct)) / 100, est: true };
+    return { v: 0, est: false };
+  }
 
   function sorted() { return state.entries.slice().sort(function (a, b) { return a.start < b.start ? 1 : a.start > b.start ? -1 : b.id - a.id; }); }
   function employers() {
@@ -413,7 +486,7 @@ if (typeof module !== "undefined") module.exports = C507;
   }
   window.addEventListener("beforeinstallprompt", function (ev) { ev.preventDefault(); installEvt = ev; if (!document.getElementById("sheet")) render(); });
   window.addEventListener("appinstalled", function () { installEvt = null; render(); toast("Appli installée"); });
-  if ("serviceWorker" in navigator) { try { navigator.serviceWorker.register("sw.js"); } catch (e) {} }
+  if ("serviceWorker" in navigator) { try { navigator.serviceWorker.register("sw.js").catch(function () {}); } catch (e) {} }
 
   function banner() {
     if (!state.example) return "";
@@ -427,6 +500,50 @@ if (typeof module !== "undefined") module.exports = C507;
       '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke="var(--panel2)" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + L + ' 999" transform="rotate(135 50 50)"/>' +
       (f > 0 ? '<circle class="arc" cx="50" cy="50" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + (L * f) + ' 999" transform="rotate(135 50 50)"/>' : "") +
       '</svg><div class="num"><span class="big">' + C.num(total) + '</span><span class="of">sur 507 h</span></div></div>';
+  }
+
+  var LETTERS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+  var chartData = [];
+  function chart(r) {
+    // Tous les mois de la période, y compris ceux à zéro.
+    var d0 = new Date(r.start), d1 = new Date(r.fct), y = d0.getUTCFullYear(), m = d0.getUTCMonth(), pts = [];
+    while (y < d1.getUTCFullYear() || (y === d1.getUTCFullYear() && m <= d1.getUTCMonth())) {
+      var hit = r.months.filter(function (x) { return x.y === y && x.m === m; })[0];
+      pts.push({ y: y, m: m, v: hit ? hit.retained : 0 });
+      m++; if (m > 11) { m = 0; y++; }
+    }
+    chartData = pts;
+    if (pts.length < 2) return "";
+    var W = 320, H = 150, L = 28, R = 10, T = 16, B = 20, cap = C.R.MOIS;
+    var top = Math.max(250, Math.ceil(Math.max.apply(null, pts.map(function (p) { return p.v; })) / 50) * 50);
+    var X = function (i) { return L + (W - L - R) * i / (pts.length - 1); };
+    var Y = function (v) { return T + (H - T - B) * (1 - v / top); };
+    var step = (W - L - R) / (pts.length - 1), peak = 0;
+    pts.forEach(function (p, i) { if (p.v > pts[peak].v) peak = i; });
+    var line = pts.map(function (p, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(p.v).toFixed(1); }).join(" ");
+    var g = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Heures retenues par mois sur la période">';
+    [0, 100, 200].forEach(function (v) {
+      g += '<line class="grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '"/><text x="' + (L - 5) + '" y="' + (Y(v) + 3) + '" text-anchor="end">' + v + '</text>';
+    });
+    g += '<line class="cap" x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(cap) + '" y2="' + Y(cap) + '"/><text x="' + (W - R) + '" y="' + (Y(cap) - 4) + '" text-anchor="end">plafond 208 h</text>';
+    g += '<path class="area" d="' + line + ' L' + X(pts.length - 1).toFixed(1) + ' ' + Y(0) + ' L' + X(0) + ' ' + Y(0) + ' Z"/><path class="line" d="' + line + '"/>';
+    g += '<line class="guide" id="chart-guide" x1="0" x2="0" y1="' + T + '" y2="' + Y(0) + '" visibility="hidden"/>';
+    pts.forEach(function (p, i) {
+      if (p.v > 0) g += '<circle class="pt" cx="' + X(i).toFixed(1) + '" cy="' + Y(p.v).toFixed(1) + '" r="' + (i === pts.length - 1 ? 5 : 4) + '"/>';
+      g += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 5) + '" text-anchor="middle">' + LETTERS[p.m] + '</text>';
+    });
+    if (pts[peak].v > 0) g += '<text class="val" x="' + Math.min(W - R - 14, Math.max(L + 14, X(peak))).toFixed(1) + '" y="' + (Y(pts[peak].v) - 9).toFixed(1) + '" text-anchor="middle">' + C.num(pts[peak].v) + ' h</text>';
+    pts.forEach(function (p, i) {
+      g += '<rect class="hit" data-pt="' + i + '" data-x="' + X(i).toFixed(1) + '" x="' + (X(i) - step / 2).toFixed(1) + '" y="0" width="' + step.toFixed(1) + '" height="' + H + '"/>';
+    });
+    return '<div class="chart">' + g + '</svg><div class="read" id="chart-read">Touche un mois de la courbe pour voir ses heures.</div></div>';
+  }
+  function chartPick(el) {
+    var p = chartData[+el.dataset.pt], rd = document.getElementById("chart-read"), gd = document.getElementById("chart-guide");
+    if (!p || !rd) return;
+    var name = C.fm(p.y, p.m);
+    rd.innerHTML = name.charAt(0).toUpperCase() + name.slice(1) + ' : <b>' + C.h(p.v) + '</b> retenues';
+    if (gd) { gd.setAttribute("x1", el.dataset.x); gd.setAttribute("x2", el.dataset.x); gd.setAttribute("visibility", "visible"); }
   }
 
   function viewCompteur() {
@@ -446,6 +563,28 @@ if (typeof module !== "undefined") module.exports = C507;
       if (r.susp > 0) rows.push('<div class="row"><span>Arrêts (5 h par jour)</span><span class="v">' + C.h(r.susp) + '</span></div>');
       rows.push('<div class="row total"><span>Total</span><span class="v">' + C.h(r.total) + '</span></div>');
       out.push('<div class="card">' + rows.join("") + '</div>');
+      var dr = C.rights(state.entries, r);
+      if (dr.count) {
+        var d = [];
+        if (!(dr.sr > 0)) d.push('<p class="help" style="margin:0">Ajoute le salaire brut dans tes contrats pour estimer ton allocation journalière.</p>');
+        else {
+          var x = dr.now || dr.proj;
+          d.push('<div class="row"><span>Salaires bruts sur la période</span><span class="v">' + C.eur(dr.sr) + '</span></div>');
+          d.push('<div class="row"><span>Heures retenues pour le calcul</span><span class="v">' + C.h(dr.nht) + '</span></div>');
+          if (dr.now) {
+            d.push('<div class="row total"><span>Allocation journalière brute</span><span class="v">' + C.eur(x.aj) + '</span></div>');
+            d.push('<div class="row"><span>Mois de 30 jours sans contrat</span><span class="v">≈ ' + C.eur(x.aj * 30) + '</span></div>');
+          } else if (dr.proj) {
+            d.push('<div class="row total"><span>Projection à 507 h, au même taux horaire</span><span class="v">' + C.eur(x.aj) + ' / jour</span></div>');
+            d.push('<p class="help" style="margin:0">Tes droits ne s\'ouvrent qu\'à 507 h. Cette projection suppose environ ' + C.eur(dr.projSr) + ' de salaires bruts à ce moment-là.</p>');
+          }
+          if (x && x.plancher) d.push('<p class="help" style="margin:0">Le calcul donne ' + C.eur(x.raw) + ' : le plancher de 38 € s\'applique.</p>');
+          if (x && x.plafond) d.push('<p class="help" style="margin:0">Le calcul donne ' + C.eur(x.raw) + ' : le plafond de 174,80 € s\'applique.</p>');
+          if (dr.missing) d.push('<p class="amber" style="margin:0;font-size:14px">' + dr.missing + ' contrat' + (dr.missing > 1 ? "s" : "") + ' sans salaire brut sur la période : l\'estimation est trop basse.</p>');
+          d.push('<p class="note" style="margin:0">Montant brut, avant cotisations. Chaque mois, les jours travaillés (heures ÷ 8 × 1,4), les franchises et le délai d\'attente de 7 jours réduisent le nombre de jours payés.</p>');
+        }
+        out.push('<div class="label">Mes droits (estimation)</div><div class="card">' + d.join("") + '</div>');
+      }
     }
     ov.alerts.forEach(function (a) { out.push('<div class="alert ' + a.lv + '"><i></i><div><b>' + esc(a.t) + '</b><p>' + esc(a.x) + '</p></div></div>'); });
     if (r && r.months.length) {
@@ -455,7 +594,7 @@ if (typeof module !== "undefined") module.exports = C507;
         return '<div class="month"><div class="row"><span>' + C.fm(x.y, x.m) + '</span><span class="v' + (lost ? " amber" : "") + '">' + C.h(x.retained) + (lost ? ' <small>(' + C.h(x.entered) + ' saisies)</small>' : "") + '</span></div>' +
           '<div class="bar' + (x.tech - x.techRet >= 0.5 ? " lost" : "") + '"><span class="t" style="width:' + tW + '%"></span><span class="c" style="width:' + cW + '%"></span></div></div>';
       });
-      out.push('<div class="card">' + bars.join("") + (r.cachets > 0 ? '<div class="legend"><span>Technicien</span><span class="c">Cachets</span></div>' : "") + '</div>');
+      out.push('<div class="card">' + chart(r) + bars.join("") + (r.cachets > 0 ? '<div class="legend"><span>Technicien</span><span class="c">Cachets</span></div>' : "") + '</div>');
     }
     out.push('<p class="note">Estimation selon l\'annexe 8 (règles d\'octobre 2026). Seul l\'examen de ton dossier par France Travail fait foi.<br>Outil perso, gratuit et non affilié à France Travail. Estimation sans garantie : vérifie toujours auprès de France Travail.</p>');
     return out.join("");
@@ -465,6 +604,19 @@ if (typeof module !== "undefined") module.exports = C507;
     var ov = C.overview(state.entries, state.settings, todayT()), r = ov.cur, t = todayT(), list = sorted(), out = [];
     out.push('<div class="tape">Contrats <small>' + list.length + ' ligne' + (list.length > 1 ? "s" : "") + '</small></div>');
     out.push(installBanner() + banner());
+    var paid = list.filter(function (e) { return e.kind === "TRAVAIL" && C.P(e.end) <= t; });
+    if (paid.some(function (e) { return netOf(e).v > 0; })) {
+      var yr = new Date(t).getUTCFullYear(), from12 = C.addMonths(t, -12), nr = netRate();
+      var tot = function (l) { var x = 0; l.forEach(function (e) { x += netOf(e).v; }); return x; };
+      var in12 = paid.filter(function (e) { return C.P(e.end) > from12; });
+      var inYr = paid.filter(function (e) { return new Date(C.P(e.end)).getUTCFullYear() === yr; });
+      var nEst = in12.filter(function (e) { return netOf(e).est; }).length;
+      var noSal = in12.filter(function (e) { return !(netOf(e).v > 0); }).length;
+      out.push('<div class="label">Salaires nets' + (nEst ? " (estimation)" : "") + '</div><div class="card"><div class="row"><span>Net en ' + yr + '</span><span class="v">' + (inYr.some(function (e) { return netOf(e).est; }) ? "≈ " : "") + C.eur(tot(inYr)) + '</span></div>' +
+        '<div class="row"><span>Net sur les 12 derniers mois</span><span class="v">' + (nEst ? "≈ " : "") + C.eur(tot(in12)) + '</span></div>' +
+        (nEst ? '<p class="help" style="margin:0">' + nEst + ' contrat' + (nEst > 1 ? "s estimés" : " estimé") + ' à partir du brut, avec ' + C.num(nr.pct) + ' % de cotisations (' + nr.src + '). Avant impôt.</p><p class="amber" style="margin:0;font-size:14px">Le signe ≈ marque un net estimé : ce n\'est pas le montant exact de ta fiche de paie.</p>' : '<p class="help" style="margin:0">Avant impôt.</p>') +
+        (noSal ? '<p class="help" style="margin:0">' + noSal + ' contrat' + (noSal > 1 ? "s" : "") + ' sans salaire saisi sur 12 mois.</p>' : "") + '</div>');
+    }
     if (!list.length) out.push('<p class="empty">Rien pour l\'instant. Ajoute ton premier contrat avec le bouton +.</p>');
     out.push('<div class="list">' + list.map(function (e) {
       var s = C.P(e.start), en = C.P(e.end), future = en > t, inW = r && en >= r.start && s <= r.fct, dim = !inW && !future;
@@ -472,7 +624,7 @@ if (typeof module !== "undefined") module.exports = C507;
       var dates = e.start === e.end ? C.fd(s) : C.fds(s) + " → " + C.fds(en);
       var val = e.kind === "MALADIE" ? "+" + C.span(e) + " j" : e.kind === "CACHET" ? C.num(+e.cachets || 0) + " cachet" + ((+e.cachets || 0) > 1 ? "s" : "") : C.h(C.raw(e));
       var tag = e.kind !== "TRAVAIL" ? '<span class="tag' + (e.kind === "CACHET" ? " cachet" : "") + '">' + k.short + '</span>' : "";
-      return '<button class="entry' + (dim ? " dim" : "") + (future ? " future" : "") + '" data-edit="' + e.id + '"><span class="main"><b>' + tag + esc(e.employer || k.label) + '</b><span>' + dates + (future ? " · à venir" : dim ? " · hors des 12 mois" : "") + (e.note ? " · " + esc(e.note) : "") + '</span></span><span class="v">' + val + '</span></button>';
+      return '<button class="entry' + (dim ? " dim" : "") + (future ? " future" : "") + '" data-edit="' + e.id + '"><span class="main"><b>' + tag + esc(e.employer || k.label) + '</b><span>' + dates + (future ? " · à venir" : dim ? " · hors des 12 mois" : "") + (netOf(e).v > 0 ? " · " + (netOf(e).est ? "≈ " : "") + C.eur(netOf(e).v) + " net" : "") + (e.note ? " · " + esc(e.note) : "") + '</span></span><span class="v">' + val + '</span></button>';
     }).join("") + '</div>');
     out.push('<p class="note">Touche une ligne pour la modifier ou la dupliquer.</p>');
     return out.join("");
@@ -486,6 +638,13 @@ if (typeof module !== "undefined") module.exports = C507;
     out.push('<div class="card"><b>Mes droits en cours</b><p class="help" style="margin:0">Fin du contrat qui a ouvert tes droits actuels (sur ta notification France Travail). Laisse vide si tu n\'as pas encore de droits ouverts.</p>' +
       '<label class="field" for="opening"><span>Fin de contrat d\'ouverture</span><input type="date" id="opening" value="' + esc(s.openingFct || "") + '"></label>' +
       (ann ? '<div class="row"><span>Date anniversaire</span><span class="v">' + ann + '</span></div>' : "") + '</div>');
+    out.push('<div class="card"><b>Apparence</b><div class="kinds" role="radiogroup" aria-label="Thème">' +
+      [["auto", "Automatique"], ["dark", "Sombre"], ["light", "Clair"]].map(function (o) {
+        return '<label><input type="radio" name="theme" value="' + o[0] + '"' + (theme === o[0] ? " checked" : "") + '><span>' + o[1] + '</span></label>';
+      }).join("") + '</div><p class="help" style="margin:0">Automatique suit le réglage de ton téléphone. Le thème clair passe la jauge et les boutons en vert.</p></div>');
+    var nr0 = netRate();
+    out.push('<div class="card"><b>Salaire net</b><p class="help" style="margin:0">Le net de chaque contrat est estimé à partir du brut. Laisse vide pour un taux automatique : celui de tes fiches de paie dès qu\'un contrat a son brut et son net saisis, sinon ' + NET_DEFAULT + ' %.</p>' +
+      '<label class="field" for="netRate"><span>Cotisations retirées du brut (%)</span><input id="netRate" inputmode="decimal" autocomplete="off" placeholder="automatique : ' + C.num(Math.round(nr0.pct * 10) / 10) + ' %" value="' + esc(s.netRate || "") + '"></label></div>');
     out.push('<div class="card"><label class="check" for="over50"><input type="checkbox" id="over50"' + (s.over50 ? " checked" : "") + '><span>J\'ai 50 ans ou plus <span class="help" style="display:block;margin:0">Plafond d\'enseignement porté de 70 à 120 h</span></span></label></div>');
     out.push('<div class="card"><b>Sauvegarde</b><p class="help" style="margin:0">Tes données restent dans ce navigateur, sur ce téléphone. Sur iPhone, Safari peut les effacer après quelques semaines sans ouverture : copie une sauvegarde de temps en temps (Notes, mail…).</p>' +
       '<div class="btns"><button class="btn" data-act="export">Copier ma sauvegarde</button></div>' +
@@ -499,7 +658,9 @@ if (typeof module !== "undefined") module.exports = C507;
       "Formation : 338 h max, enseignement compris (70 h, 120 h à 50 ans)",
       "Arrêt, accident du travail, maternité : 5 h par jour",
       "Maladie entre deux contrats : la période est allongée d'autant",
-      "Intérim, auto-entreprise, contrats hors spectacle : ne comptent pas"
+      "Intérim, auto-entreprise, contrats hors spectacle : ne comptent pas",
+      "Salaire net : c'est une estimation à partir du brut, avant impôt, sauf si tu saisis le montant exact",
+      "Allocation journalière brute = A + B + C, selon tes salaires bruts et tes heures (AJ minimale 31,96 €, plancher 38 €, plafond 174,80 €)"
     ].map(function (x) { return "<li>" + x + "</li>"; }).join("") + '</ul><p class="note" style="margin:0">Outil perso, gratuit et non affilié à France Travail. Estimation sans garantie : seul l\'examen de ton dossier par France Travail fait foi.</p></div>');
     return out.join("");
   }
@@ -518,6 +679,15 @@ if (typeof module !== "undefined") module.exports = C507;
     var o = document.getElementById("opening"), c = document.getElementById("over50"), f = document.getElementById("importFile");
     o.addEventListener("change", function () { if (state.example) leaveExample(); state.settings.openingFct = o.value || ""; save(); render(); });
     c.addEventListener("change", function () { if (state.example) leaveExample(); state.settings.over50 = c.checked; save(); render(); });
+    document.querySelectorAll('input[name="theme"]').forEach(function (r) {
+      r.addEventListener("change", function () { theme = r.value; try { localStorage.setItem(THEME_KEY, theme); } catch (e) {} applyTheme(); });
+    });
+    var nrIn = document.getElementById("netRate");
+    nrIn.addEventListener("change", function () {
+      var v = parseFloat(nrIn.value.replace(",", "."));
+      if (state.example) leaveExample();
+      state.settings.netRate = v > 0 && v < 60 ? String(v) : ""; save(); render();
+    });
     f.addEventListener("change", function () {
       var file = f.files && f.files[0]; if (!file) return;
       var rd = new FileReader(); rd.onload = function () { document.getElementById("importText").value = rd.result; askImport(); }; rd.readAsText(file);
@@ -565,6 +735,8 @@ if (typeof module !== "undefined") module.exports = C507;
         '<label class="field" for="f-end"><span>Fin</span><input type="date" id="f-end" value="' + e.end + '" min="' + e.start + '" required></label></div>';
       if (needsH) {
         html += '<label class="field" for="f-hours"><span>Heures (total de la ligne)</span><input id="f-hours" inputmode="decimal" autocomplete="off" placeholder="ex. 36" value="' + (e.hours ? C.num(e.hours) : "") + '"></label>';
+        if (e.kind === "TRAVAIL") html += '<div class="two"><label class="field" for="f-gross"><span>Salaire brut (€)</span><input id="f-gross" inputmode="decimal" autocomplete="off" placeholder="ex. 540" value="' + (e.gross ? C.num(e.gross) : "") + '"></label>' +
+          '<label class="field" for="f-net"><span>Salaire net (€)</span><input id="f-net" inputmode="decimal" autocomplete="off" placeholder="' + (e.gross ? "≈ " + C.num(netOf({ gross: e.gross }).v) : "calculé seul") + '" value="' + (e.net ? C.num(e.net) : "") + '"></label></div><p class="help">Le net se calcule seul à partir du brut (−' + C.num(netRate().pct) + ' % de cotisations). C\'est une estimation : saisis le net seulement si tu connais le montant exact.</p>';
         if (e.kind === "TRAVAIL") html += '<div class="btns">' + [8, 10, 12].map(function (x) { return '<button type="button" class="btn ghost" data-perday="' + x + '">' + x + ' h/j × ' + n + '</button>'; }).join("") + '</div>';
       } else if (e.kind === "CACHET") {
         html += '<label class="field" for="f-cachets"><span>Nombre de cachets</span><input id="f-cachets" inputmode="numeric" autocomplete="off" placeholder="ex. 1" value="' + (e.cachets || "") + '"></label><p class="help calc" id="f-calc">' + C.num(+e.cachets || 0) + ' × 12 h = ' + C.h((+e.cachets || 0) * 12) + '</p>';
@@ -596,6 +768,8 @@ if (typeof module !== "undefined") module.exports = C507;
       entry.start = g("f-start") || entry.start;
       entry.end = g("f-end") || entry.end;
       if (entry.end < entry.start) entry.end = entry.start;
+      if (g("f-net") != null) entry.net = parseFloat(String(g("f-net")).replace(/\s/g, "").replace(",", ".")) || 0;
+      if (g("f-gross") != null) entry.gross = parseFloat(String(g("f-gross")).replace(/\s/g, "").replace(",", ".")) || 0;
       if (g("f-hours") != null) entry.hours = parseFloat(String(g("f-hours")).replace(",", ".")) || 0;
       if (g("f-cachets") != null) entry.cachets = parseFloat(String(g("f-cachets")).replace(",", ".")) || 0;
       var sel = g("f-emp-sel");
@@ -609,6 +783,11 @@ if (typeof module !== "undefined") module.exports = C507;
       sheet.addEventListener("click", function (ev) { if (ev.target === sheet) close(); });
       form.querySelectorAll('input[name="kind"]').forEach(function (r) { r.addEventListener("change", function () { read(); entry.kind = r.value; draw(); }); });
       ["f-start", "f-end"].forEach(function (id) { document.getElementById(id).addEventListener("change", function () { read(); draw(); }); });
+      var gIn = document.getElementById("f-gross"), nIn = document.getElementById("f-net");
+      if (gIn && nIn) gIn.addEventListener("input", function () {
+        var gv = parseFloat(gIn.value.replace(/\s/g, "").replace(",", ".")) || 0;
+        nIn.placeholder = gv ? "≈ " + C.num(netOf({ gross: gv }).v) : "calculé seul";
+      });
       var empSel = document.getElementById("f-emp-sel");
       if (empSel) empSel.addEventListener("change", function () {
         var isNew = empSel.value === "__new__";
@@ -637,6 +816,8 @@ if (typeof module !== "undefined") module.exports = C507;
         if (msg) { err.textContent = msg; err.hidden = false; return; }
         var clean = { id: entry.id || Date.now(), kind: entry.kind, start: entry.start, end: entry.end,
           hours: (entry.kind === "TRAVAIL" || entry.kind === "FORMATION" || entry.kind === "ENSEIGNEMENT") ? entry.hours : 0,
+          gross: entry.kind === "TRAVAIL" ? (entry.gross || 0) : 0,
+          net: entry.kind === "TRAVAIL" ? (entry.net || 0) : 0,
           cachets: entry.kind === "CACHET" ? entry.cachets : 0, employer: entry.employer, note: entry.note };
         if (state.example) leaveExample();
         state.entries = state.entries.filter(function (x) { return x.id !== clean.id; }).concat([clean]);
@@ -657,7 +838,9 @@ if (typeof module !== "undefined") module.exports = C507;
   // ---------- Événements globaux ----------
   document.querySelectorAll("nav.tabs button").forEach(function (b) { b.addEventListener("click", function () { setTab(b.dataset.tab); }); });
   document.getElementById("fab").addEventListener("click", function () { openSheet(newEntry()); });
+  document.getElementById("view").addEventListener("pointerover", function (ev) { var hp = ev.target.closest("[data-pt]"); if (hp) chartPick(hp); });
   document.getElementById("view").addEventListener("click", function (ev) {
+    var cp = ev.target.closest("[data-pt]"); if (cp) { chartPick(cp); return; }
     var ed = ev.target.closest("[data-edit]");
     if (ed) { var e = state.entries.filter(function (x) { return String(x.id) === ed.dataset.edit; })[0]; if (e) openSheet(Object.assign({}, e)); return; }
     var a = ev.target.closest("[data-act]"); if (!a) return;
