@@ -135,7 +135,7 @@ nav.tabs button[aria-selected="true"] svg { color: var(--accent); }
 .help { color: var(--mute); font-size: 13px; margin: -4px 0 0; }
 .field { display: grid; gap: 4px; min-width: 0; }
 .field > span { font-size: 13px; color: var(--mute); font-weight: 600; }
-.field input, .field textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; font-size: 16px; min-width: 0; }
+.field input, .field textarea, .field select { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; font-size: 16px; min-width: 0; }
 .field textarea { min-height: 90px; font-family: var(--mono); font-size: 12px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .calc { font-family: var(--mono); font-size: 14px; }
@@ -562,9 +562,18 @@ if (typeof module !== "undefined") module.exports = C507;
       } else {
         html += '<p class="calc">' + (e.kind === "SUSPENSION" ? n + " jour" + (n > 1 ? "s" : "") + " × 5 h = " + C.h(n * 5) : n + " jour" + (n > 1 ? "s" : "") + " ajouté" + (n > 1 ? "s" : "") + " à la période de 12 mois") + '</p>';
       }
-      html += '<label class="field" for="f-emp"><span>' + (e.kind === "TRAVAIL" ? "Employeur" : e.kind === "CACHET" ? "Organisateur" : "Organisme (facultatif)") + '</span><input id="f-emp" list="emps" autocomplete="off" value="' + esc(e.employer) + '"></label>' +
-        '<datalist id="emps">' + emps.map(function (x) { return '<option value="' + esc(x) + '">'; }).join("") + '</datalist>' +
-        (e.kind === "TRAVAIL" ? '<p class="help">Écris-le toujours pareil : avec deux employeurs dans le mois, le plafond passe à 250 h.</p>' : "") +
+      var empLabel = e.kind === "TRAVAIL" ? "Entreprise (employeur)" : "Organisme (facultatif)";
+      var known = emps.indexOf(e.employer) >= 0;
+      var typing = !emps.length || e._newEmp || (e.employer && !known);
+      if (emps.length) {
+        html += '<label class="field" for="f-emp-sel"><span>' + empLabel + '</span><select id="f-emp-sel">' +
+          '<option value=""' + (!typing && !e.employer ? " selected" : "") + '>' + (e.kind === "TRAVAIL" ? "Choisir une entreprise" : "Aucun") + '</option>' +
+          emps.map(function (x) { return '<option value="' + esc(x) + '"' + (!typing && x === e.employer ? " selected" : "") + '>' + esc(x) + '</option>'; }).join("") +
+          '<option value="__new__"' + (typing ? " selected" : "") + '>+ Nouvelle entreprise</option></select></label>';
+      }
+      if (typing) html += '<label class="field" for="f-emp"><span>' + (emps.length ? "Nom de la nouvelle entreprise" : empLabel) + '</span><input id="f-emp" autocomplete="off" placeholder="ex. Théâtre municipal" value="' + esc(e.employer) + '"></label>';
+      html += "" +
+        (e.kind === "TRAVAIL" ? '<p class="help">Avec deux entreprises différentes dans le même mois, le plafond passe de 208 à 250 h.</p>' : "") +
         '<label class="field" for="f-note"><span>Note (lieu, presta…)</span><input id="f-note" autocomplete="off" value="' + esc(e.note) + '"></label>' +
         '<p class="red" id="f-err" hidden></p>' +
         '<div class="btns"><button type="submit" class="btn">Enregistrer</button><button type="button" class="btn quiet" data-act="close">Annuler</button>' +
@@ -580,7 +589,8 @@ if (typeof module !== "undefined") module.exports = C507;
       if (entry.end < entry.start) entry.end = entry.start;
       if (g("f-hours") != null) entry.hours = parseFloat(String(g("f-hours")).replace(",", ".")) || 0;
       if (g("f-cachets") != null) entry.cachets = parseFloat(String(g("f-cachets")).replace(",", ".")) || 0;
-      entry.employer = (g("f-emp") || "").trim();
+      var sel = g("f-emp-sel");
+      entry.employer = (sel != null && sel !== "__new__" ? sel : (g("f-emp") || "")).trim();
       entry.note = (g("f-note") || "").trim();
     }
     function close() { root.innerHTML = ""; document.removeEventListener("keydown", onKey); }
@@ -590,6 +600,13 @@ if (typeof module !== "undefined") module.exports = C507;
       sheet.addEventListener("click", function (ev) { if (ev.target === sheet) close(); });
       form.querySelectorAll('input[name="kind"]').forEach(function (r) { r.addEventListener("change", function () { read(); entry.kind = r.value; draw(); }); });
       ["f-start", "f-end"].forEach(function (id) { document.getElementById(id).addEventListener("change", function () { read(); draw(); }); });
+      var empSel = document.getElementById("f-emp-sel");
+      if (empSel) empSel.addEventListener("change", function () {
+        var isNew = empSel.value === "__new__";
+        read(); entry._newEmp = isNew; if (isNew) entry.employer = "";
+        draw();
+        if (isNew) { var ni = document.getElementById("f-emp"); if (ni) ni.focus(); }
+      });
       var cach = document.getElementById("f-cachets");
       if (cach) cach.addEventListener("input", function () { var v = parseFloat(cach.value.replace(",", ".")) || 0; document.getElementById("f-calc").textContent = C.num(v) + " × 12 h = " + C.h(v * 12); });
       form.querySelectorAll("[data-perday]").forEach(function (b) {
