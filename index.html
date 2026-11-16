@@ -406,6 +406,15 @@ if (typeof module !== "undefined") module.exports = C507;
     el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { el.hidden = true; }, 2200);
   }
 
+  var installEvt = null;
+  function installBanner() {
+    if (!installEvt) return "";
+    return '<div class="banner"><div><b>Installer l\'appli</b> sur l\'écran d\'accueil, pour l\'ouvrir comme une vraie appli, même sans réseau.</div><div class="btns"><button class="btn" data-act="install">Installer</button><button class="btn quiet" data-act="installNo">Plus tard</button></div></div>';
+  }
+  window.addEventListener("beforeinstallprompt", function (ev) { ev.preventDefault(); installEvt = ev; if (!document.getElementById("sheet")) render(); });
+  window.addEventListener("appinstalled", function () { installEvt = null; render(); toast("Appli installée"); });
+  if ("serviceWorker" in navigator) { try { navigator.serviceWorker.register("sw.js"); } catch (e) {} }
+
   function banner() {
     if (!state.example) return "";
     return '<div class="banner"><div><b>Données d\'exemple.</b> Ce ne sont pas tes contrats : ton premier ajout efface l\'exemple.</div><div class="btns"><button class="btn" data-act="start">Commencer avec mes contrats</button></div></div>';
@@ -423,7 +432,7 @@ if (typeof module !== "undefined") module.exports = C507;
   function viewCompteur() {
     var ov = C.overview(state.entries, state.settings, todayT()), r = ov.cur, out = [];
     out.push('<div class="tape">Compteur 507 <small>Annexe 8 · technicien</small></div>');
-    out.push(banner());
+    out.push(installBanner() + banner());
     out.push(gauge(r ? r.total : 0));
     if (!r) out.push('<div class="status"><span>Aucun contrat terminé pour l\'instant.</span></div>');
     else {
@@ -455,7 +464,7 @@ if (typeof module !== "undefined") module.exports = C507;
   function viewContrats() {
     var ov = C.overview(state.entries, state.settings, todayT()), r = ov.cur, t = todayT(), list = sorted(), out = [];
     out.push('<div class="tape">Contrats <small>' + list.length + ' ligne' + (list.length > 1 ? "s" : "") + '</small></div>');
-    out.push(banner());
+    out.push(installBanner() + banner());
     if (!list.length) out.push('<p class="empty">Rien pour l\'instant. Ajoute ton premier contrat avec le bouton +.</p>');
     out.push('<div class="list">' + list.map(function (e) {
       var s = C.P(e.start), en = C.P(e.end), future = en > t, inW = r && en >= r.start && s <= r.fct, dim = !inW && !future;
@@ -472,7 +481,7 @@ if (typeof module !== "undefined") module.exports = C507;
   function viewReglages() {
     var s = state.settings, out = [];
     out.push('<div class="tape">Réglages</div>');
-    out.push(banner());
+    out.push(installBanner() + banner());
     var ann = s.openingFct ? C.fd(C.addMonths(C.P(s.openingFct), 12)) : null;
     out.push('<div class="card"><b>Mes droits en cours</b><p class="help" style="margin:0">Fin du contrat qui a ouvert tes droits actuels (sur ta notification France Travail). Laisse vide si tu n\'as pas encore de droits ouverts.</p>' +
       '<label class="field" for="opening"><span>Fin de contrat d\'ouverture</span><input type="date" id="opening" value="' + esc(s.openingFct || "") + '"></label>' +
@@ -653,6 +662,8 @@ if (typeof module !== "undefined") module.exports = C507;
     if (ed) { var e = state.entries.filter(function (x) { return String(x.id) === ed.dataset.edit; })[0]; if (e) openSheet(Object.assign({}, e)); return; }
     var a = ev.target.closest("[data-act]"); if (!a) return;
     var act = a.dataset.act;
+    if (act === "install" && installEvt) { var ie = installEvt; installEvt = null; try { ie.prompt(); } catch (e) {} render(); return; }
+    if (act === "installNo") { installEvt = null; render(); return; }
     if (act === "start") { leaveExample(); save(); render(); toast("Exemple effacé"); }
     if (act === "export") copyText(JSON.stringify({ version: 1, entries: state.entries, settings: state.settings }, null, 1));
     if (act === "import") askImport();
