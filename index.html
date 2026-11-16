@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121113">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Compteur 507">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+</style>
+<title>Compteur 507</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout : une colonne d'appli de téléphone (560 px max), barre d'onglets en bas, étiquettes façon gaffer sur flight case. */
+:root {
+  --bg: #121113; --panel: #1c1b1e; --panel2: #29272b; --line: #3a373c;
+  --fg: #ede6d6; --mute: #9d968b; --accent: #e0262b; --on-accent: #ffffff;
+  --amber: #e8a33d; --green: #5dbb63; --tape: #2f2d31;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f2f1ef; --panel: #ffffff; --panel2: #e9e7e4; --line: #d6d2cc;
+  --fg: #1b191a; --mute: #69645d; --accent: #c81e24; --on-accent: #ffffff;
+  --amber: #a8680a; --green: #2d8338; --tape: #262427; color-scheme: light; } }
+:root[data-theme="light"] {
+  --bg: #f2f1ef; --panel: #ffffff; --panel2: #e9e7e4; --line: #d6d2cc;
+  --fg: #1b191a; --mute: #69645d; --accent: #c81e24; --on-accent: #ffffff;
+  --amber: #a8680a; --green: #2d8338; --tape: #262427; color-scheme: light; }
+
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--body); font-size: 16px; line-height: 1.4; -webkit-text-size-adjust: 100%; }
+* { box-sizing: border-box; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app { max-width: 560px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px calc(110px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 12px; }
+
+.tape { justify-self: start; display: inline-flex; align-items: baseline; gap: 10px; background: var(--tape); color: #ede6d6; padding: 5px 14px 4px; font-family: var(--display); font-weight: 900; font-size: 20px; letter-spacing: .08em; text-transform: uppercase;
+  clip-path: polygon(0 8%, 3% 0, 97% 4%, 100% 0, 99% 92%, 100% 100%, 2% 96%, 0 100%); }
+.tape small { font-family: var(--body); font-weight: 600; font-size: 12px; letter-spacing: .06em; color: #b5ad9f; }
+.label { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); font-weight: 600; margin-top: 6px; }
+
+.card { background: var(--panel); border-radius: 14px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.row { display: flex; align-items: baseline; gap: 12px; }
+.row > :first-child { flex: 1; min-width: 0; color: var(--mute); }
+.row.total > :first-child { color: var(--fg); font-weight: 700; }
+.v { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.row.total .v { font-family: var(--display); font-weight: 900; font-size: 22px; }
+.amber { color: var(--amber); } .green { color: var(--green); } .red { color: var(--accent); }
+
+.gauge { position: relative; width: min(240px, 70vw); aspect-ratio: 1; margin: 4px auto 0; max-width: 100%; }
+.gauge svg { width: 100%; height: 100%; display: block; }
+.gauge .num { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.gauge .big { font-family: var(--display); font-weight: 900; font-size: 64px; line-height: .9; font-variant-numeric: tabular-nums; }
+.gauge .of { color: var(--mute); font-size: 14px; }
+.status { text-align: center; display: grid; gap: 2px; }
+.status b { font-size: 21px; }
+.status span { color: var(--mute); font-size: 13px; font-family: var(--mono); }
+.pill { justify-self: center; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 10px; border-radius: 99px; background: var(--panel2); color: var(--mute); }
+
+.alert { display: flex; background: var(--panel); border-radius: 14px; overflow: hidden; }
+.alert i { width: 5px; flex: none; background: var(--mute); }
+.alert div { padding: 11px 13px; display: grid; gap: 2px; min-width: 0; }
+.alert b { font-weight: 700; }
+.alert p { margin: 0; color: var(--mute); font-size: 14px; }
+.alert.ok i { background: var(--green); } .alert.ok b { color: var(--green); }
+.alert.warn i { background: var(--amber); } .alert.warn b { color: var(--amber); }
+.alert.crit i { background: var(--accent); } .alert.crit b { color: var(--accent); }
+
+.month { display: grid; gap: 4px; }
+.month .row > :first-child { color: var(--fg); text-transform: capitalize; }
+.bar { height: 6px; border-radius: 3px; background: var(--panel2); overflow: hidden; display: flex; }
+.bar span { display: block; height: 100%; }
+.bar .t { background: var(--accent); } .bar .c { background: var(--fg); opacity: .75; } .bar.lost .t { background: var(--amber); }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--mute); flex-wrap: wrap; }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 6px; border-radius: 2px; margin-right: 6px; background: var(--accent); vertical-align: middle; }
+.legend span.c::before { background: var(--fg); opacity: .75; }
+
+.banner { background: var(--panel2); border: 1px dashed var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 8px; font-size: 14px; }
+.banner b { color: var(--amber); }
+
+.entry { display: flex; align-items: center; gap: 12px; background: var(--panel); border-radius: 12px; padding: 12px 14px; border: 0; width: 100%; text-align: left; }
+.entry .main { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.entry .main b { font-weight: 600; overflow-wrap: anywhere; }
+.entry .main span { color: var(--mute); font-size: 13px; }
+.entry .v { font-size: 18px; font-weight: 700; }
+.entry.dim .main b, .entry.dim .v { color: var(--mute); }
+.entry.future .v { color: var(--amber); }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; background: var(--panel2); color: var(--mute); margin-right: 6px; }
+.tag.cachet { background: var(--fg); color: var(--bg); }
+.list { display: grid; gap: 8px; }
+.empty { color: var(--mute); padding: 8px 0; }
+
+.btn { border: 0; border-radius: 10px; padding: 11px 16px; font-weight: 700; background: var(--accent); color: var(--on-accent); }
+.btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+.btn.quiet { background: transparent; color: var(--mute); padding-inline: 8px; }
+.btn.danger { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--panel); border-top: 1px solid var(--line);
+  padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
+nav.tabs .in { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+nav.tabs button { border: 0; background: transparent; color: var(--mute); padding: 8px 4px; border-radius: 10px; font-weight: 600; font-size: 14px; display: grid; justify-items: center; gap: 2px; }
+nav.tabs button svg { width: 22px; height: 22px; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); background: var(--panel2); }
+nav.tabs button[aria-selected="true"] svg { color: var(--accent); }
+.fab { position: fixed; z-index: 21; right: max(18px, calc(env(safe-area-inset-right, 0px) + 18px)); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); width: 58px; height: 58px; border-radius: 18px; border: 0; background: var(--accent); color: var(--on-accent); font-size: 32px; line-height: 1; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+@media (min-width: 600px) { .fab { right: calc(50% - 280px + 16px); } }
+
+.sheet { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center; }
+.sheet .box { background: var(--panel); width: 100%; max-width: 560px; max-height: 92%; overflow-y: auto; border-radius: 18px 18px 0 0;
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 12px; }
+.sheet h2 { margin: 0; font-family: var(--display); font-weight: 900; font-size: 26px; text-transform: uppercase; letter-spacing: .04em; }
+.kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+.kinds label { position: relative; }
+.kinds input { position: absolute; opacity: 0; inset: 0; }
+.kinds span { display: inline-block; padding: 7px 12px; border-radius: 99px; border: 1px solid var(--line); font-weight: 600; font-size: 14px; }
+.kinds input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.kinds input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.help { color: var(--mute); font-size: 13px; margin: -4px 0 0; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field > span { font-size: 13px; color: var(--mute); font-weight: 600; }
+.field input, .field textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; font-size: 16px; min-width: 0; }
+.field textarea { min-height: 90px; font-family: var(--mono); font-size: 12px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.calc { font-family: var(--mono); font-size: 14px; }
+.check { display: flex; gap: 10px; align-items: center; }
+.check input { width: 22px; height: 22px; accent-color: var(--accent); }
+.rules { margin: 0; padding-left: 18px; color: var(--mute); font-size: 14px; display: grid; gap: 4px; }
+.note { color: var(--mute); font-size: 12px; }
+.toast { position: fixed; z-index: 60; left: 50%; transform: translateX(-50%); bottom: calc(150px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 9px 16px; border-radius: 99px; font-weight: 700; font-size: 14px; }
+@media (prefers-reduced-motion: no-preference) { .gauge .arc { transition: stroke-dasharray .6s ease; } }
+</style>
+</head>
+<body>
+
+
+<main class="app" id="view" aria-live="polite"></main>
+
+<button class="fab" id="fab" aria-label="Ajouter une ligne">+</button>
+<nav class="tabs" aria-label="Onglets"><div class="in" role="tablist">
+  <button role="tab" data-tab="compteur" id="tab-compteur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 17a8 8 0 1 1 14 0"/><path d="M12 13l4-5"/></svg>Compteur</button>
+  <button role="tab" data-tab="contrats" id="tab-contrats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>Contrats</button>
+  <button role="tab" data-tab="reglages" id="tab-reglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Réglages</button>
+</div></nav>
+<div id="sheet-root"></div>
+
+<script>/* Moteur de calcul : annexe 8 (heures réelles) + cachets ponctuels d'artiste (annexe 10).
+ * Règles vérifiées en octobre 2026 :
+ *  - 507 h sur les 12 mois qui précèdent la fin de contrat retenue, de date à date ;
+ *  - heures des annexes 8 et 10 additionnées ; l'annexe retenue est celle qui a le plus d'heures ;
+ *  - technicien : 208 h max par mois civil, 250 h si plusieurs employeurs dans le mois ;
+ *  - artiste : 1 cachet = 12 h, 28 cachets max par mois civil ;
+ *  - mois coupé par la fenêtre : plafond ÷ 20,8 × jours du mois dans la période ;
+ *  - formation assimilée jusqu'à 338 h, enseignement compris (70 h, 120 h à 50 ans et plus) ;
+ *  - arrêt, accident du travail, maternité : 5 h par jour ; maladie entre deux contrats : période allongée.
+ * Estimation : seul l'examen du dossier par France Travail fait foi. */
+var C507 = (function () {
+  var DAY = 86400000;
+  var R = { SEUIL: 507, MOIS: 208, MOIS_MULTI: 250, CACHETS_MOIS: 28, CACHET_H: 12,
+            FORMATION: 338, ENS: 70, ENS_50: 120, JOUR: 5 };
+  var KINDS = {
+    TRAVAIL: { label: "Contrat technicien", short: "Contrat", help: "Heures de l'attestation employeur (AEM)" },
+    FORMATION: { label: "Formation continue", short: "Formation", help: "Sans ARE ni AREF pendant la formation, 338 h max" },
+    ENSEIGNEMENT: { label: "Enseignement (établissement agréé)", short: "Cours", help: "70 h max, compris dans les 338 h de formation" },
+    SUSPENSION: { label: "Arrêt, accident du travail, maternité", short: "Arrêt", help: "Compte 5 h par jour" },
+    MALADIE: { label: "Maladie entre deux contrats", short: "Maladie", help: "Ne compte pas d'heures mais allonge la période d'autant" }
+  };
+  var WORK = { TRAVAIL: 1, CACHET: 1 };
+
+  function P(s) { var a = s.split("-"); return Date.UTC(+a[0], +a[1] - 1, +a[2]); }
+  function S(t) { return new Date(t).toISOString().slice(0, 10); }
+  function dim(y, m) { return new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); }
+  function addMonths(t, n) {
+    var d = new Date(t), y = d.getUTCFullYear(), m = d.getUTCMonth() + n;
+    y += Math.floor(m / 12); m = ((m % 12) + 12) % 12;
+    return Date.UTC(y, m, Math.min(d.getUTCDate(), dim(y, m)));
+  }
+  function days(a, b) { return Math.round((b - a) / DAY); }
+  function span(e) { return days(P(e.start), P(e.end)) + 1; }
+  function overlap(e, from, to) {
+    var a = Math.max(P(e.start), from), b = Math.min(P(e.end), to);
+    return b < a ? 0 : days(a, b) + 1;
+  }
+  function raw(e) {
+    if (e.kind === "SUSPENSION") return span(e) * R.JOUR;
+    if (e.kind === "MALADIE") return 0;
+    if (e.kind === "CACHET") return (+e.cachets || 0) * R.CACHET_H;
+    return +e.hours || 0;
+  }
+  function share(e, from, to) { var o = overlap(e, from, to); return o ? raw(e) * o / span(e) : 0; }
+  function cachetsIn(e, from, to) { var o = overlap(e, from, to); return o ? (+e.cachets || 0) * o / span(e) : 0; }
+  function sum(list, f) { var s = 0; for (var i = 0; i < list.length; i++) s += f(list[i]); return s; }
+  function of(list, kind) { return list.filter(function (e) { return e.kind === kind; }); }
+
+  function windowStart(fct, entries) {
+    var base = addMonths(fct, -12) + DAY, start = base, extra = 0, mal = of(entries, "MALADIE");
+    for (var i = 0; i < 10; i++) {
+      extra = sum(mal, function (e) { return overlap(e, start, fct); });
+      var next = base - extra * DAY;
+      if (next === start) break;
+      start = next;
+    }
+    return { start: start, extra: extra };
+  }
+
+  function compute(entries, fct, over50) {
+    var w = windowStart(fct, entries), start = w.start;
+    var tech = of(entries, "TRAVAIL"), art = of(entries, "CACHET"), months = [];
+    var d0 = new Date(start), d1 = new Date(fct);
+    var y = d0.getUTCFullYear(), m = d0.getUTCMonth(), ly = d1.getUTCFullYear(), lm = d1.getUTCMonth();
+    while (y < ly || (y === ly && m <= lm)) {
+      var mS = Date.UTC(y, m, 1), mE = Date.UTC(y, m, dim(y, m));
+      var from = Math.max(mS, start), to = Math.min(mE, fct), n = days(from, to) + 1;
+      var whole = from === mS && to === mE;
+      var tIn = tech.filter(function (e) { return overlap(e, from, to) > 0; });
+      var emp = {};
+      tIn.forEach(function (e) { emp[(e.employer || "").trim().toLowerCase()] = 1; });
+      var nEmp = Object.keys(emp).length;
+      var full = nEmp >= 2 ? R.MOIS_MULTI : R.MOIS;
+      var tCap = whole ? full : Math.min(full, full / 20.8 * n);
+      var tH = sum(tIn, function (e) { return share(e, from, to); });
+      var cCap = whole ? R.CACHETS_MOIS : Math.min(R.CACHETS_MOIS, R.CACHETS_MOIS / 20.8 * n);
+      var cN = sum(art, function (e) { return cachetsIn(e, from, to); });
+      if (tH > 0 || cN > 0) {
+        var tR = Math.min(tH, tCap), cR = Math.min(cN, cCap);
+        months.push({ y: y, m: m, tech: tH, techCap: tCap, techRet: tR, employers: nEmp,
+                      cachets: cN, cachetsCap: cCap, cachetsRet: cR,
+                      entered: tH + cN * R.CACHET_H, retained: tR + cR * R.CACHET_H });
+      }
+      m++; if (m > 11) { m = 0; y++; }
+    }
+    var formation = sum(of(entries, "FORMATION"), function (e) { return share(e, start, fct); });
+    var ens = sum(of(entries, "ENSEIGNEMENT"), function (e) { return share(e, start, fct); });
+    var ensRet = Math.min(ens, over50 ? R.ENS_50 : R.ENS);
+    var formRet = Math.min(formation + ensRet, R.FORMATION);
+    var susp = sum(of(entries, "SUSPENSION"), function (e) { return share(e, start, fct); });
+    var techRet = sum(months, function (x) { return x.techRet; });
+    var artRet = sum(months, function (x) { return x.cachetsRet * R.CACHET_H; });
+    var total = techRet + artRet + formRet + susp;
+    return {
+      fct: fct, start: start, maladie: w.extra, months: months,
+      techEntered: sum(months, function (x) { return x.tech; }), techRet: techRet,
+      cachets: sum(months, function (x) { return x.cachets; }), cachetsRet: sum(months, function (x) { return x.cachetsRet; }),
+      artRet: artRet, formation: formation, ens: ens, ensRet: ensRet, formRet: formRet, susp: susp,
+      total: total, missing: Math.max(0, R.SEUIL - total), reached: total >= R.SEUIL - 1e-9,
+      annexe: artRet > techRet ? 10 : 8
+    };
+  }
+
+  function lastWorkEnd(entries, maxT) {
+    var best = null;
+    entries.forEach(function (e) {
+      if (!WORK[e.kind]) return;
+      var t = P(e.end);
+      if ((maxT == null || t <= maxT) && (best == null || t > best)) best = t;
+    });
+    return best;
+  }
+
+  function firstReached(entries, over50, notBefore, upTo) {
+    var ends = {};
+    entries.forEach(function (e) {
+      var t = P(e.end);
+      if (WORK[e.kind] && t <= upTo && (notBefore == null || t > notBefore)) ends[t] = 1;
+    });
+    var list = Object.keys(ends).map(Number).sort(function (a, b) { return a - b; });
+    for (var i = 0; i < list.length; i++) if (compute(entries, list[i], over50).reached) return list[i];
+    return null;
+  }
+
+  function overview(entries, settings, today) {
+    var over50 = !!settings.over50, alerts = [];
+    var fct = lastWorkEnd(entries, today);
+    var cur = fct != null ? compute(entries, fct, over50) : null;
+    var lastP = lastWorkEnd(entries, null);
+    var planned = lastP != null && lastP > today ? compute(entries, lastP, over50) : null;
+    var past = entries.filter(function (e) { return P(e.start) <= today; });
+    var opening = settings.openingFct ? P(settings.openingFct) : null;
+    var anniv = opening != null ? addMonths(opening, 12) : null;
+    var dLeft = anniv != null ? days(today, anniv) : null;
+    var reachedOn = cur && cur.reached ? firstReached(entries, over50, opening, today) : null;
+
+    if (!entries.length) alerts.push({ lv: "info", t: "Ajoute tes contrats", x: "Onglet Contrats, bouton +. Une ligne par contrat, avec les heures de l'attestation employeur." });
+
+    if (anniv == null) {
+      alerts.push({ lv: "info", t: "Date anniversaire inconnue", x: "Si tu as déjà des droits ouverts, renseigne dans Réglages la fin du contrat qui les a ouverts." });
+    } else {
+      var miss = cur ? cur.missing : R.SEUIL;
+      if (dLeft < 0) alerts.push({ lv: "crit", t: "Date anniversaire passée (" + fd(anniv) + ")", x: "Si tes droits ont été renouvelés, mets à jour la date d'ouverture dans Réglages." });
+      else if (cur && cur.reached) alerts.push({ lv: "ok", t: "507 h atteintes", x: "Tu peux déjà demander par écrit un réexamen anticipé, sans attendre le " + fd(anniv) + "." + (reachedOn != null ? " Seuil franchi avec le contrat fini le " + fd(reachedOn) + "." : "") });
+      else if (dLeft <= 30) alerts.push({ lv: "crit", t: "Plus que " + dLeft + " jours", x: "Il te manque " + h(miss) + " avant le " + fd(anniv) + "." });
+      else if (dLeft <= 60) alerts.push({ lv: "warn", t: "Date anniversaire dans " + dLeft + " jours", x: "Il te manque " + h(miss) + " avant le " + fd(anniv) + "." });
+      else alerts.push({ lv: "info", t: "Date anniversaire : " + fd(anniv), x: "Dans " + dLeft + " jours. Il te manque " + h(miss) + "." });
+      if (dLeft >= 0 && dLeft <= 60 && cur && !cur.reached && cur.total >= 338)
+        alerts.push({ lv: "info", t: "Clause de rattrapage possible", x: "Avec au moins 338 h, elle peut s'appliquer si tu as 5 ans d'affiliation (5 ouvertures de droits ou 2 535 h) sur les 10 dernières années. Demande écrite à la date anniversaire, jusqu'à 6 mois d'indemnisation en plus." });
+    }
+
+    if (planned && cur && planned.total > cur.total + 1e-9)
+      alerts.push({ lv: "info", t: "Avec tes contrats prévus", x: h(planned.total) + " au " + fd(planned.fct) + (planned.reached ? ", seuil atteint." : ", il manquera " + h(planned.missing) + ".") });
+
+    if (past.length) {
+      var now = compute(past, today, over50), in30 = compute(past, today + 30 * DAY, over50);
+      if (now.total - in30.total >= 1)
+        alerts.push({ lv: "warn", t: h(now.total - in30.total) + " sortent du compteur d'ici 30 jours", x: "Ce sont des heures de plus de 12 mois qui ne compteront plus si rien de nouveau n'arrive." });
+    }
+
+    if (cur) {
+      if (cur.annexe === 10)
+        alerts.push({ lv: "warn", t: "Plus d'heures d'artiste que de technicien", x: "Tes droits s'ouvriraient en annexe 10 (artistes), avec d'autres règles de calcul de l'allocation." });
+      cur.months.forEach(function (x) {
+        if (x.tech - x.techRet >= 0.5)
+          alerts.push({ lv: "warn", t: "Plafond dépassé en " + fm(x.y, x.m), x: h(x.tech - x.techRet) + " au-delà de " + h(x.techCap) + " ne comptent pas." + (x.employers < 2 ? " Avec deux employeurs ou plus ce mois-là, le plafond passe à 250 h." : "") });
+        if (x.cachets - x.cachetsRet >= 0.05)
+          alerts.push({ lv: "warn", t: "Trop de cachets en " + fm(x.y, x.m), x: "28 cachets au plus sont retenus par mois." });
+      });
+      if (cur.ens > cur.ensRet + 0.5) alerts.push({ lv: "warn", t: "Enseignement plafonné", x: h(cur.ensRet) + " retenues sur " + h(cur.ens) + "." });
+      if (cur.formation + cur.ensRet > R.FORMATION + 0.5) alerts.push({ lv: "warn", t: "Formation plafonnée à 338 h", x: "Formation et enseignement réunis ne peuvent pas dépasser 338 h." });
+    }
+
+    return { today: today, cur: cur, planned: planned, anniv: anniv, dLeft: dLeft, reachedOn: reachedOn, alerts: alerts };
+  }
+
+  var DF = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  var DS = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit", timeZone: "UTC" });
+  var MF = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" });
+  function fd(t) { return DF.format(new Date(t)); }
+  function fds(t) { return DS.format(new Date(t)); }
+  function fm(y, m) { return MF.format(new Date(Date.UTC(y, m, 1))); }
+  function num(x) {
+    var r = Math.round(x * 10) / 10;
+    return (r % 1 === 0 ? String(r) : r.toFixed(1)).replace(".", ",");
+  }
+  function h(x) { return num(x) + " h"; }
+
+  return { R: R, KINDS: KINDS, WORK: WORK, DAY: DAY, P: P, S: S, addMonths: addMonths, days: days, span: span,
+           raw: raw, compute: compute, overview: overview, lastWorkEnd: lastWorkEnd,
+           fd: fd, fds: fds, fm: fm, h: h, num: num };
+})();
+if (typeof module !== "undefined") module.exports = C507;
+</script>
+<script>
+(function () {
+  var C = C507, KEY = "compteur507.v1";
+  var state = { entries: [], settings: { openingFct: "", over50: false }, example: false };
+  var tab = "compteur";
+
+  function todayT() { var n = new Date(); return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()); }
+  function iso(t) { return C.S(t); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+  function exampleData() {
+    var t = todayT(), D = C.DAY, d = function (n) { return iso(t + n * D); };
+    var E = function (id, kind, s, e, x) { return Object.assign({ id: id, kind: kind, start: s, end: e, hours: 0, cachets: 0, employer: "", note: "" }, x); };
+    return {
+      entries: [
+        E(1, "TRAVAIL", d(-310), d(-306), { hours: 48, employer: "Théâtre municipal" }),
+        E(2, "TRAVAIL", d(-250), d(-221), { hours: 236, employer: "Sono Pyrénées", note: "Tournée des fêtes" }),
+        E(3, "TRAVAIL", d(-160), d(-158), { hours: 30, employer: "Théâtre municipal" }),
+        E(5, "TRAVAIL", d(-75), d(-70), { hours: 60, employer: "Sono Pyrénées" }),
+        E(6, "TRAVAIL", d(-20), d(-18), { hours: 36, employer: "Festival d'été" }),
+        E(7, "TRAVAIL", d(12), d(14), { hours: 30, employer: "Théâtre municipal", note: "Prévu" })
+      ],
+      settings: { openingFct: iso(C.addMonths(t, -10)), over50: false }
+    };
+  }
+
+  function load() {
+    var raw = null;
+    try { raw = localStorage.getItem(KEY); } catch (e) {}
+    if (raw) { try { var d = JSON.parse(raw); state.entries = d.entries || []; state.settings = Object.assign({ openingFct: "", over50: false }, d.settings); return; } catch (e) {} }
+    var ex = exampleData(); state.entries = ex.entries; state.settings = ex.settings; state.example = true;
+  }
+  function save() {
+    if (state.example) return;
+    try { localStorage.setItem(KEY, JSON.stringify({ version: 1, entries: state.entries, settings: state.settings })); } catch (e) {}
+  }
+  function leaveExample() { if (state.example) { state.example = false; state.entries = []; state.settings = { openingFct: "", over50: false }; } }
+
+  function sorted() { return state.entries.slice().sort(function (a, b) { return a.start < b.start ? 1 : a.start > b.start ? -1 : b.id - a.id; }); }
+  function employers() {
+    var n = {};
+    state.entries.forEach(function (e) { var k = (e.employer || "").trim(); if (k) n[k] = (n[k] || 0) + 1; });
+    return Object.keys(n).sort(function (a, b) { return n[b] - n[a]; });
+  }
+
+  var toastT;
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    if (!el) { el = document.createElement("div"); el.id = "toast"; el.className = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+    el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { el.hidden = true; }, 2200);
+  }
+
+  function banner() {
+    if (!state.example) return "";
+    return '<div class="banner"><div><b>Données d\'exemple.</b> Ce ne sont pas tes contrats : ton premier ajout efface l\'exemple.</div><div class="btns"><button class="btn" data-act="start">Commencer avec mes contrats</button></div></div>';
+  }
+
+  function gauge(total) {
+    var f = Math.min(1, total / C.R.SEUIL), r = 42, L = 2 * Math.PI * r * 0.75;
+    var col = f >= 1 ? "var(--green)" : "var(--accent)";
+    return '<div class="gauge"><svg viewBox="0 0 100 100" aria-hidden="true">' +
+      '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke="var(--panel2)" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + L + ' 999" transform="rotate(135 50 50)"/>' +
+      (f > 0 ? '<circle class="arc" cx="50" cy="50" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + (L * f) + ' 999" transform="rotate(135 50 50)"/>' : "") +
+      '</svg><div class="num"><span class="big">' + C.num(total) + '</span><span class="of">sur 507 h</span></div></div>';
+  }
+
+  function viewCompteur() {
+    var ov = C.overview(state.entries, state.settings, todayT()), r = ov.cur, out = [];
+    out.push('<div class="tape">Compteur 507 <small>Annexe 8 · technicien</small></div>');
+    out.push(banner());
+    out.push(gauge(r ? r.total : 0));
+    if (!r) out.push('<div class="status"><span>Aucun contrat terminé pour l\'instant.</span></div>');
+    else {
+      out.push('<div class="status"><b class="' + (r.reached ? "green" : "") + '">' + (r.reached ? "Seuil atteint" : "Il manque " + C.h(r.missing)) + '</b>' +
+        '<span>' + C.fd(r.start) + ' → ' + C.fd(r.fct) + (r.maladie ? " (+" + r.maladie + " j maladie)" : "") + '</span></div>');
+      if (r.artRet > 0) out.push('<div class="pill">Annexe retenue : ' + r.annexe + '</div>');
+      var rows = ['<div class="row"><span>Heures de technicien retenues</span><span class="v">' + C.h(r.techRet) + '</span></div>'];
+      if (r.techEntered - r.techRet >= 0.5) rows.push('<div class="row"><span>Perdues (plafond mensuel)</span><span class="v amber">− ' + C.h(r.techEntered - r.techRet) + '</span></div>');
+      if (r.cachets > 0) rows.push('<div class="row"><span>Cachets d\'artiste (' + C.num(r.cachetsRet) + ' × 12 h)</span><span class="v">' + C.h(r.artRet) + '</span></div>');
+      if (r.formation + r.ens > 0) rows.push('<div class="row"><span>Formation et enseignement</span><span class="v">' + C.h(r.formRet) + '</span></div>');
+      if (r.susp > 0) rows.push('<div class="row"><span>Arrêts (5 h par jour)</span><span class="v">' + C.h(r.susp) + '</span></div>');
+      rows.push('<div class="row total"><span>Total</span><span class="v">' + C.h(r.total) + '</span></div>');
+      out.push('<div class="card">' + rows.join("") + '</div>');
+    }
+    ov.alerts.forEach(function (a) { out.push('<div class="alert ' + a.lv + '"><i></i><div><b>' + esc(a.t) + '</b><p>' + esc(a.x) + '</p></div></div>'); });
+    if (r && r.months.length) {
+      out.push('<div class="label">Mois par mois</div>');
+      var bars = r.months.map(function (x) {
+        var lost = x.entered - x.retained >= 0.5, tW = Math.min(100, x.techRet / 250 * 100), cW = Math.min(100 - tW, x.cachetsRet * 12 / 250 * 100);
+        return '<div class="month"><div class="row"><span>' + C.fm(x.y, x.m) + '</span><span class="v' + (lost ? " amber" : "") + '">' + C.h(x.retained) + (lost ? ' <small>(' + C.h(x.entered) + ' saisies)</small>' : "") + '</span></div>' +
+          '<div class="bar' + (x.tech - x.techRet >= 0.5 ? " lost" : "") + '"><span class="t" style="width:' + tW + '%"></span><span class="c" style="width:' + cW + '%"></span></div></div>';
+      });
+      out.push('<div class="card">' + bars.join("") + (r.cachets > 0 ? '<div class="legend"><span>Technicien</span><span class="c">Cachets</span></div>' : "") + '</div>');
+    }
+    out.push('<p class="note">Estimation selon l\'annexe 8 (règles d\'octobre 2026). Seul l\'examen de ton dossier par France Travail fait foi.<br>Outil perso, gratuit et non affilié à France Travail. Estimation sans garantie : vérifie toujours auprès de France Travail.</p>');
+    return out.join("");
+  }
+
+  function viewContrats() {
+    var ov = C.overview(state.entries, state.settings, todayT()), r = ov.cur, t = todayT(), list = sorted(), out = [];
+    out.push('<div class="tape">Contrats <small>' + list.length + ' ligne' + (list.length > 1 ? "s" : "") + '</small></div>');
+    out.push(banner());
+    if (!list.length) out.push('<p class="empty">Rien pour l\'instant. Ajoute ton premier contrat avec le bouton +.</p>');
+    out.push('<div class="list">' + list.map(function (e) {
+      var s = C.P(e.start), en = C.P(e.end), future = en > t, inW = r && en >= r.start && s <= r.fct, dim = !inW && !future;
+      var k = C.KINDS[e.kind] || C.KINDS.TRAVAIL;
+      var dates = e.start === e.end ? C.fd(s) : C.fds(s) + " → " + C.fds(en);
+      var val = e.kind === "MALADIE" ? "+" + C.span(e) + " j" : e.kind === "CACHET" ? C.num(+e.cachets || 0) + " cachet" + ((+e.cachets || 0) > 1 ? "s" : "") : C.h(C.raw(e));
+      var tag = e.kind !== "TRAVAIL" ? '<span class="tag' + (e.kind === "CACHET" ? " cachet" : "") + '">' + k.short + '</span>' : "";
+      return '<button class="entry' + (dim ? " dim" : "") + (future ? " future" : "") + '" data-edit="' + e.id + '"><span class="main"><b>' + tag + esc(e.employer || k.label) + '</b><span>' + dates + (future ? " · à venir" : dim ? " · hors des 12 mois" : "") + (e.note ? " · " + esc(e.note) : "") + '</span></span><span class="v">' + val + '</span></button>';
+    }).join("") + '</div>');
+    out.push('<p class="note">Touche une ligne pour la modifier ou la dupliquer.</p>');
+    return out.join("");
+  }
+
+  function viewReglages() {
+    var s = state.settings, out = [];
+    out.push('<div class="tape">Réglages</div>');
+    out.push(banner());
+    var ann = s.openingFct ? C.fd(C.addMonths(C.P(s.openingFct), 12)) : null;
+    out.push('<div class="card"><b>Mes droits en cours</b><p class="help" style="margin:0">Fin du contrat qui a ouvert tes droits actuels (sur ta notification France Travail). Laisse vide si tu n\'as pas encore de droits ouverts.</p>' +
+      '<label class="field" for="opening"><span>Fin de contrat d\'ouverture</span><input type="date" id="opening" value="' + esc(s.openingFct || "") + '"></label>' +
+      (ann ? '<div class="row"><span>Date anniversaire</span><span class="v">' + ann + '</span></div>' : "") + '</div>');
+    out.push('<div class="card"><label class="check" for="over50"><input type="checkbox" id="over50"' + (s.over50 ? " checked" : "") + '><span>J\'ai 50 ans ou plus <span class="help" style="display:block;margin:0">Plafond d\'enseignement porté de 70 à 120 h</span></span></label></div>');
+    out.push('<div class="card"><b>Sauvegarde</b><p class="help" style="margin:0">Tes données restent dans ce navigateur, sur ce téléphone. Sur iPhone, Safari peut les effacer après quelques semaines sans ouverture : copie une sauvegarde de temps en temps (Notes, mail…).</p>' +
+      '<div class="btns"><button class="btn" data-act="export">Copier ma sauvegarde</button></div>' +
+      '<label class="field" for="importText"><span>Restaurer : colle une sauvegarde ici ou choisis le fichier</span><textarea id="importText" placeholder="{ &quot;version&quot;: 1, … }"></textarea></label>' +
+      '<div class="btns"><button class="btn ghost" data-act="import">Restaurer</button><label class="btn quiet" for="importFile">Choisir un fichier</label><input type="file" id="importFile" accept=".json,application/json,text/plain" hidden></div>' +
+      '<div id="importConfirm"></div></div>');
+    out.push('<div class="card"><b>L\'installer sur l\'écran d\'accueil</b><ul class="rules"><li>iPhone : dans Safari, bouton Partager puis « Sur l\'écran d\'accueil ».</li><li>Android : menu ⋮ de Chrome puis « Ajouter à l\'écran d\'accueil ».</li></ul></div>');
+    out.push('<div class="card"><b>Règles appliquées</b><ul class="rules">' + [
+      "507 h sur les 12 mois avant ta dernière fin de contrat, de date à date",
+      "Technicien : heures réelles, 208 h max par mois (250 h avec plusieurs employeurs)",
+      "Formation : 338 h max, enseignement compris (70 h, 120 h à 50 ans)",
+      "Arrêt, accident du travail, maternité : 5 h par jour",
+      "Maladie entre deux contrats : la période est allongée d'autant",
+      "Intérim, auto-entreprise, contrats hors spectacle : ne comptent pas"
+    ].map(function (x) { return "<li>" + x + "</li>"; }).join("") + '</ul><p class="note" style="margin:0">Outil perso, gratuit et non affilié à France Travail. Estimation sans garantie : seul l\'examen de ton dossier par France Travail fait foi.</p></div>');
+    return out.join("");
+  }
+
+  function render() {
+    var v = document.getElementById("view");
+    v.innerHTML = tab === "contrats" ? viewContrats() : tab === "reglages" ? viewReglages() : viewCompteur();
+    document.querySelectorAll("nav.tabs button").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.tab === tab ? "true" : "false"); });
+    document.getElementById("fab").hidden = tab === "reglages";
+    if (tab === "reglages") bindSettings();
+  }
+
+  function setTab(t) { tab = t; try { history.replaceState(null, "", "#" + t); } catch (e) {} render(); window.scrollTo(0, 0); }
+
+  function bindSettings() {
+    var o = document.getElementById("opening"), c = document.getElementById("over50"), f = document.getElementById("importFile");
+    o.addEventListener("change", function () { if (state.example) leaveExample(); state.settings.openingFct = o.value || ""; save(); render(); });
+    c.addEventListener("change", function () { if (state.example) leaveExample(); state.settings.over50 = c.checked; save(); render(); });
+    f.addEventListener("change", function () {
+      var file = f.files && f.files[0]; if (!file) return;
+      var rd = new FileReader(); rd.onload = function () { document.getElementById("importText").value = rd.result; askImport(); }; rd.readAsText(file);
+    });
+  }
+
+  function parseBackup(text) {
+    var d = JSON.parse(text);
+    if (!d || !Array.isArray(d.entries)) throw new Error("format");
+    d.entries.forEach(function (e) { if (!C.KINDS[e.kind] || !/^\d{4}-\d\d-\d\d$/.test(e.start) || !/^\d{4}-\d\d-\d\d$/.test(e.end)) throw new Error("ligne"); });
+    return d;
+  }
+  function askImport() {
+    var text = document.getElementById("importText").value.trim(), box = document.getElementById("importConfirm");
+    if (!text) { toast("Colle d'abord une sauvegarde"); return; }
+    var d; try { d = parseBackup(text); } catch (e) { box.innerHTML = '<p class="red" style="margin:0">Cette sauvegarde est illisible. Copie-la en entier, depuis la première accolade jusqu\'à la dernière.</p>'; return; }
+    box.innerHTML = '<div class="banner"><div>Remplacer tes données actuelles par les <b>' + d.entries.length + ' lignes</b> de la sauvegarde ?</div><div class="btns"><button class="btn" data-act="importYes">Remplacer</button><button class="btn quiet" data-act="importNo">Annuler</button></div></div>';
+    box._data = d;
+  }
+
+  function copyText(text) {
+    function fallback() {
+      var ta = document.getElementById("importText");
+      ta.value = text; ta.focus(); ta.select();
+      toast("Sélectionné : copie-le avec Copier");
+    }
+    try { navigator.clipboard.writeText(text).then(function () { toast("Sauvegarde copiée"); }, fallback); } catch (e) { fallback(); }
+  }
+
+  // ---------- Fiche d'ajout / modification ----------
+  function openSheet(entry) {
+    var isNew = !entry.id, confirmDel = false;
+    var root = document.getElementById("sheet-root");
+    var emps = employers();
+    function draw() {
+      var e = entry, k = C.KINDS[e.kind];
+      var needsH = e.kind === "TRAVAIL" || e.kind === "FORMATION" || e.kind === "ENSEIGNEMENT";
+      var n = Math.max(1, C.days(C.P(e.start), C.P(e.end < e.start ? e.start : e.end)) + 1);
+      var html = '<div class="sheet" id="sheet"><form class="box" id="form" novalidate>' +
+        '<div class="row"><h2 style="flex:1">' + (isNew ? "Nouvelle ligne" : "Modifier") + '</h2>' + (!isNew ? '<button type="button" class="btn quiet" data-act="dup">Dupliquer</button>' : "") + '</div>' +
+        '<div class="kinds" role="radiogroup" aria-label="Type de ligne">' + Object.keys(C.KINDS).map(function (key) {
+          return '<label><input type="radio" name="kind" value="' + key + '"' + (key === e.kind ? " checked" : "") + '><span>' + C.KINDS[key].short + '</span></label>';
+        }).join("") + '</div><p class="help">' + k.label + ' · ' + k.help + '</p>' +
+        '<div class="two"><label class="field" for="f-start"><span>Début</span><input type="date" id="f-start" value="' + e.start + '" required></label>' +
+        '<label class="field" for="f-end"><span>Fin</span><input type="date" id="f-end" value="' + e.end + '" min="' + e.start + '" required></label></div>';
+      if (needsH) {
+        html += '<label class="field" for="f-hours"><span>Heures (total de la ligne)</span><input id="f-hours" inputmode="decimal" autocomplete="off" placeholder="ex. 36" value="' + (e.hours ? C.num(e.hours) : "") + '"></label>';
+        if (e.kind === "TRAVAIL") html += '<div class="btns">' + [8, 10, 12].map(function (x) { return '<button type="button" class="btn ghost" data-perday="' + x + '">' + x + ' h/j × ' + n + '</button>'; }).join("") + '</div>';
+      } else if (e.kind === "CACHET") {
+        html += '<label class="field" for="f-cachets"><span>Nombre de cachets</span><input id="f-cachets" inputmode="numeric" autocomplete="off" placeholder="ex. 1" value="' + (e.cachets || "") + '"></label><p class="help calc" id="f-calc">' + C.num(+e.cachets || 0) + ' × 12 h = ' + C.h((+e.cachets || 0) * 12) + '</p>';
+      } else {
+        html += '<p class="calc">' + (e.kind === "SUSPENSION" ? n + " jour" + (n > 1 ? "s" : "") + " × 5 h = " + C.h(n * 5) : n + " jour" + (n > 1 ? "s" : "") + " ajouté" + (n > 1 ? "s" : "") + " à la période de 12 mois") + '</p>';
+      }
+      html += '<label class="field" for="f-emp"><span>' + (e.kind === "TRAVAIL" ? "Employeur" : e.kind === "CACHET" ? "Organisateur" : "Organisme (facultatif)") + '</span><input id="f-emp" list="emps" autocomplete="off" value="' + esc(e.employer) + '"></label>' +
+        '<datalist id="emps">' + emps.map(function (x) { return '<option value="' + esc(x) + '">'; }).join("") + '</datalist>' +
+        (e.kind === "TRAVAIL" ? '<p class="help">Écris-le toujours pareil : avec deux employeurs dans le mois, le plafond passe à 250 h.</p>' : "") +
+        '<label class="field" for="f-note"><span>Note (lieu, presta…)</span><input id="f-note" autocomplete="off" value="' + esc(e.note) + '"></label>' +
+        '<p class="red" id="f-err" hidden></p>' +
+        '<div class="btns"><button type="submit" class="btn">Enregistrer</button><button type="button" class="btn quiet" data-act="close">Annuler</button>' +
+        (!isNew ? (confirmDel ? '<button type="button" class="btn danger" data-act="delYes" style="margin-left:auto">Confirmer la suppression</button>' : '<button type="button" class="btn quiet red" data-act="del" style="margin-left:auto">Supprimer</button>') : "") +
+        '</div></form></div>';
+      root.innerHTML = html;
+      bind();
+    }
+    function read() {
+      var g = function (id) { var el = document.getElementById(id); return el ? el.value : null; };
+      entry.start = g("f-start") || entry.start;
+      entry.end = g("f-end") || entry.end;
+      if (entry.end < entry.start) entry.end = entry.start;
+      if (g("f-hours") != null) entry.hours = parseFloat(String(g("f-hours")).replace(",", ".")) || 0;
+      if (g("f-cachets") != null) entry.cachets = parseFloat(String(g("f-cachets")).replace(",", ".")) || 0;
+      entry.employer = (g("f-emp") || "").trim();
+      entry.note = (g("f-note") || "").trim();
+    }
+    function close() { root.innerHTML = ""; document.removeEventListener("keydown", onKey); }
+    function onKey(ev) { if (ev.key === "Escape") close(); }
+    function bind() {
+      var form = document.getElementById("form"), sheet = document.getElementById("sheet");
+      sheet.addEventListener("click", function (ev) { if (ev.target === sheet) close(); });
+      form.querySelectorAll('input[name="kind"]').forEach(function (r) { r.addEventListener("change", function () { read(); entry.kind = r.value; draw(); }); });
+      ["f-start", "f-end"].forEach(function (id) { document.getElementById(id).addEventListener("change", function () { read(); draw(); }); });
+      var cach = document.getElementById("f-cachets");
+      if (cach) cach.addEventListener("input", function () { var v = parseFloat(cach.value.replace(",", ".")) || 0; document.getElementById("f-calc").textContent = C.num(v) + " × 12 h = " + C.h(v * 12); });
+      form.querySelectorAll("[data-perday]").forEach(function (b) {
+        b.addEventListener("click", function () { read(); var n = C.days(C.P(entry.start), C.P(entry.end)) + 1; document.getElementById("f-hours").value = +b.dataset.perday * n; });
+      });
+      form.addEventListener("click", function (ev) {
+        var a = ev.target.closest("[data-act]"); if (!a) return;
+        var act = a.dataset.act;
+        if (act === "close") close();
+        if (act === "del") { read(); confirmDel = true; draw(); }
+        if (act === "delYes") { state.entries = state.entries.filter(function (x) { return x.id !== entry.id; }); save(); close(); render(); toast("Ligne supprimée"); }
+        if (act === "dup") { read(); var copy = Object.assign({}, entry, { id: 0 }); close(); openSheet(copy); toast("Copie : change les dates puis enregistre"); }
+      });
+      form.addEventListener("submit", function (ev) {
+        ev.preventDefault(); read();
+        var err = document.getElementById("f-err"), msg = "";
+        if ((entry.kind === "TRAVAIL" || entry.kind === "FORMATION" || entry.kind === "ENSEIGNEMENT") && !(entry.hours > 0)) msg = "Indique le nombre d'heures, par exemple 36.";
+        if (entry.kind === "CACHET" && !(entry.cachets > 0)) msg = "Indique le nombre de cachets, par exemple 1.";
+        if (msg) { err.textContent = msg; err.hidden = false; return; }
+        var clean = { id: entry.id || Date.now(), kind: entry.kind, start: entry.start, end: entry.end,
+          hours: (entry.kind === "TRAVAIL" || entry.kind === "FORMATION" || entry.kind === "ENSEIGNEMENT") ? entry.hours : 0,
+          cachets: entry.kind === "CACHET" ? entry.cachets : 0, employer: entry.employer, note: entry.note };
+        if (state.example) leaveExample();
+        state.entries = state.entries.filter(function (x) { return x.id !== clean.id; }).concat([clean]);
+        save(); close(); render(); toast("Enregistré");
+      });
+    }
+    document.addEventListener("keydown", onKey);
+    draw();
+    var first = document.getElementById(entry.kind === "CACHET" ? "f-cachets" : "f-hours");
+    if (first && isNew) first.focus({ preventScroll: true });
+  }
+
+  function newEntry() {
+    var t = iso(todayT()), last = sorted().filter(function (e) { return e.kind === "TRAVAIL"; })[0];
+    return { id: 0, kind: "TRAVAIL", start: t, end: t, hours: 0, cachets: 0, employer: state.example ? "" : (last ? last.employer : ""), note: "" };
+  }
+
+  // ---------- Événements globaux ----------
+  document.querySelectorAll("nav.tabs button").forEach(function (b) { b.addEventListener("click", function () { setTab(b.dataset.tab); }); });
+  document.getElementById("fab").addEventListener("click", function () { openSheet(newEntry()); });
+  document.getElementById("view").addEventListener("click", function (ev) {
+    var ed = ev.target.closest("[data-edit]");
+    if (ed) { var e = state.entries.filter(function (x) { return String(x.id) === ed.dataset.edit; })[0]; if (e) openSheet(Object.assign({}, e)); return; }
+    var a = ev.target.closest("[data-act]"); if (!a) return;
+    var act = a.dataset.act;
+    if (act === "start") { leaveExample(); save(); render(); toast("Exemple effacé"); }
+    if (act === "export") copyText(JSON.stringify({ version: 1, entries: state.entries, settings: state.settings }, null, 1));
+    if (act === "import") askImport();
+    if (act === "importNo") document.getElementById("importConfirm").innerHTML = "";
+    if (act === "importYes") {
+      var d = document.getElementById("importConfirm")._data;
+      if (d) { state.example = false; state.entries = d.entries; state.settings = Object.assign({ openingFct: "", over50: false }, d.settings); save(); render(); toast("Données restaurées"); }
+    }
+  });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && !document.getElementById("sheet")) render(); });
+
+  load();
+  var h0 = (location.hash || "").slice(1);
+  if (h0 === "contrats" || h0 === "reglages" || h0 === "compteur") tab = h0;
+  render();
+})();
+</script>
+
+</body>
+</html>
